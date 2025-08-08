@@ -50,6 +50,8 @@ struct RenderContentCompiler: MarkupVisitor {
         struct ParsedOptions {
             var lang: String?
             var copy = false
+            var wrap = 100
+            var highlight = [Int]()
         }
 
         func parseLanguageString(_ input: String?) -> ParsedOptions {
@@ -65,6 +67,15 @@ struct RenderContentCompiler: MarkupVisitor {
                 let lower = part.lowercased()
                 if lower == "copy" {
                     options.copy = true
+                } else if lower.starts(with: "wrap=") {
+                    if let countString = lower.split(separator: "=").dropFirst().first, let count = Int(countString) {
+                        options.wrap = count
+                    }
+                } else if lower.starts(with: "highlight=") {
+                    let liststr = part.dropFirst("highlight=".count)
+                    let cleanListstr = liststr.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+                    let indicesArray = cleanListstr.split(separator: ",").compactMap{Int($0.trimmingCharacters(in: .whitespaces))}
+                    options.highlight = indicesArray
                 } else if options.lang == nil {
                     options.lang = part
                 }
@@ -74,7 +85,7 @@ struct RenderContentCompiler: MarkupVisitor {
 
         let options = parseLanguageString(codeBlock.language)
 
-        return [RenderBlockContent.codeListing(.init(syntax: options.lang ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: options.copy))]
+        return [RenderBlockContent.codeListing(.init(syntax: options.lang ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: options.copy, wrap: options.wrap, highlight: options.highlight))]
     }
     
     mutating func visitHeading(_ heading: Heading) -> [any RenderContent] {
