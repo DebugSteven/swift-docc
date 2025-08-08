@@ -53,6 +53,8 @@ struct RenderContentCompiler: MarkupVisitor {
             struct ParsedOptions {
                 var lang: String?
                 var nocopy = false
+                var wrap = 100
+                var highlight = [Int]()
             }
 
             func parseLanguageString(_ input: String?) -> ParsedOptions {
@@ -64,23 +66,32 @@ struct RenderContentCompiler: MarkupVisitor {
 
                 var options = ParsedOptions()
 
-                for part in parts {
-                    let lower = part.lowercased()
-                    if lower == "nocopy" {
-                        options.nocopy = true
-                    } else if options.lang == nil {
-                        options.lang = part
-                    }
-                }
+            	for part in parts {
+            	    let lower = part.lowercased()
+            	    if lower == "nocopy" {
+            	        options.nocopy = true
+            	    } else if lower.starts(with: "wrap=") {
+            	        if let countString = lower.split(separator: "=").dropFirst().first, let count = Int(countString) {
+            	            options.wrap = count
+            	        }
+            	    } else if lower.starts(with: "highlight=") {
+            	        let liststr = part.dropFirst("highlight=".count)
+            	        let cleanListstr = liststr.trimmingCharacters(in: CharacterSet(charactersIn: "[]"))
+            	        let indicesArray = cleanListstr.split(separator: ",").compactMap{Int($0.trimmingCharacters(in: .whitespaces))}
+            	        options.highlight = indicesArray
+            	    } else if options.lang == nil {
+            	        options.lang = part
+            	    }
+            	}
                 return options
             }
 
             let options = parseLanguageString(codeBlock.language)
 
-            return [RenderBlockContent.codeListing(.init(syntax: options.lang ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: !options.nocopy))]
+            return [RenderBlockContent.codeListing(.init(syntax: options.lang ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: !options.nocopy, wrap: options.wrap, highlight: options.highlight))]
 
         } else {
-            return [RenderBlockContent.codeListing(.init(syntax: codeBlock.language ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: false))]
+            return [RenderBlockContent.codeListing(.init(syntax: codeBlock.language ?? bundle.info.defaultCodeListingLanguage, code: codeBlock.code.splitByNewlines, metadata: nil, copyToClipboard: false, wrap: 0, highlight: [Int]()))]
         }
     }
     
