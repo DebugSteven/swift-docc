@@ -69,7 +69,10 @@ public enum RenderBlockContent: Equatable {
     
     /// A collection of content that should be rendered in a tab-based layout.
     case tabNavigator(TabNavigator)
-    
+
+    /// A collection of options for annotating the presentation of code blocks/listings.
+    case codeBlockAnnotations(CodeBlockAnnotations)
+
     /// A collection of authored links that should be rendered in a similar style
     /// to links in an on-page Topics section.
     case links(Links)
@@ -548,7 +551,11 @@ public enum RenderBlockContent: Equatable {
             public let content: [RenderBlockContent]
         }
     }
-    
+
+    public struct CodeBlockAnnotations: Codable, Equatable {
+        public let copyToClipboard: Bool
+    }
+
     /// A collection of authored links that should be rendered in a similar style
     /// to links in an on-page Topics section.
     public struct Links: Codable, Equatable {
@@ -781,6 +788,13 @@ extension RenderBlockContent: Codable {
                     tabs: container.decode([TabNavigator.Tab].self, forKey: .tabs)
                 )
             )
+        case .codeBlockAnnotations:
+            let copy = FeatureFlags.current.isExperimentalCodeBlockAnnotationsEnabled
+            self = try .codeBlockAnnotations(
+                CodeBlockAnnotations(
+                    copyToClipboard: container.decodeIfPresent(Bool.self, forKey: .copyToClipboard) ?? copy
+                )
+            )
         case .links:
             self = try .links(
                 Links(
@@ -801,7 +815,7 @@ extension RenderBlockContent: Codable {
     }
     
     private enum BlockType: String, Codable {
-        case paragraph, aside, codeListing, heading, orderedList, unorderedList, step, endpointExample, dictionaryExample, table, termList, row, small, tabNavigator, links, video, thematicBreak
+        case paragraph, aside, codeListing, heading, orderedList, unorderedList, step, endpointExample, dictionaryExample, table, termList, row, small, tabNavigator, codeBlockAnnotations, links, video, thematicBreak
     }
     
     private var type: BlockType {
@@ -820,6 +834,7 @@ extension RenderBlockContent: Codable {
         case .row: return .row
         case .small: return .small
         case .tabNavigator: return .tabNavigator
+        case .codeBlockAnnotations: return .codeBlockAnnotations
         case .links: return .links
         case .video: return .video
         case .thematicBreak: return .thematicBreak
@@ -879,6 +894,8 @@ extension RenderBlockContent: Codable {
             try container.encode(small.inlineContent, forKey: .inlineContent)
         case .tabNavigator(let tabNavigator):
             try container.encode(tabNavigator.tabs, forKey: .tabs)
+        case .codeBlockAnnotations(let codeBlockAnnotations):
+            try container.encode(codeBlockAnnotations.copyToClipboard, forKey: .copyToClipboard)
         case .links(let links):
             try container.encode(links.style, forKey: .style)
             try container.encode(links.items, forKey: .items)

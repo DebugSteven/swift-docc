@@ -28,6 +28,7 @@ extension BlockDirective {
         Chapter.directiveName,
         Choice.directiveName,
         Code.directiveName,
+        CodeBlockAnnotations.directiveName,
         Comment.directiveName,
         ContentAndMedia.directiveName,
         CustomMetadata.directiveName,

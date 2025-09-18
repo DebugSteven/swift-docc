@@ -15,6 +15,7 @@ struct DirectiveIndex {
         Metadata.self,
         Redirect.self,
         Snippet.self,
+        CodeBlockAnnotations.self,
         DeprecationSummary.self,
         Row.self,
         Options.self,

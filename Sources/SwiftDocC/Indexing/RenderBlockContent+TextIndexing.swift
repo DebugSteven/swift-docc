@@ -68,6 +68,8 @@ extension RenderBlockContent: TextIndexing {
             return tabNavigator.tabs.map { tab in
                 return tab.content.rawIndexableTextContent(references: references)
             }.joined(separator: " ")
+        case .codeBlockAnnotations(let codeBlockAnnotations):
+            return String(codeBlockAnnotations.copyToClipboard)
         case .links(let links):
             // Matches the behavior in `RenderInlineContent+TextIndexing` for a
             // `RenderInlineContent.reference`
